@@ -1,17 +1,23 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Yehuda Interests Labyrinth</title>
-<style>
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-.container { max-width: 800px; margin: auto; padding: 20px; }
-button.choice-btn { display: block; width: 100%; padding: 18px; font-size: 1.2em; margin: 10px 0; border-radius: 12px; border: 2px solid #444; background-color: #f4f4f4; cursor: pointer; transition: background-color 0.3s ease; }
-button.choice-btn:hover { background-color: #e0e0e0; }
-button.choice-btn:active { background-color: #ccc; }
-</style>
-</head>
-<body>
-{% block content %}{% endblock %}
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="stats">
+        <strong>Stats:</strong> Integrity: {{ stats.integrity }}, Reflection: {{ stats.reflection }}, Ego Risk: {{ stats.ego_risk }}
+        {% if stats.ego_risk > 80 %}<div class="warning">Warning: Ego Risk dangerously high!</div>{% endif %}
+        {% if stats.reflection < 20 %}<div class="warning">Caution: Reflection too low!</div>{% endif %}
+    </div>
+
+    <h2>{{ question|replace('\n','<br>')|safe }}</h2>
+
+    {% if not end %}
+    <form method="POST">
+        {% for key, option in options.items() %}
+            <input type="hidden" name="option_text" value="{{ option.text }}">
+            <button class="choice-btn" type="submit" name="option" value="{{ key }}">{{ option.text }}</button>
+        {% endfor %}
+    </form>
+    {% else %}
+    <p>The affirmation journey is complete.</p>
+    {% endif %}
+</div>
+{% endblock %}
