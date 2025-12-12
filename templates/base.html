@@ -1,12 +1,17 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Allyship Decision Tree</title>
-    <link rel="stylesheet" href="/static/style.css">
+<meta charset="utf-8">
+<title>Yehuda Interests Labyrinth</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+.container { max-width: 800px; margin: auto; padding: 20px; }
+button.choice-btn { display: block; width: 100%; padding: 18px; font-size: 1.2em; margin: 10px 0; border-radius: 12px; border: 2px solid #444; background-color: #f4f4f4; cursor: pointer; transition: background-color 0.3s ease; }
+button.choice-btn:hover { background-color: #e0e0e0; }
+button.choice-btn:active { background-color: #ccc; }
+</style>
 </head>
 <body>
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+{% block content %}{% endblock %}
 </body>
 </html>
