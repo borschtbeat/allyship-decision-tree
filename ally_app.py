@@ -1,157 +1,161 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123"
+app.secret_key = "supersecretkey789"
 
 # ------------------------------
-# Ultra-Convoluted Decision Tree (Track Answers)
+# Ultra-Verbose Yehuda Assessment Tree
 # ------------------------------
 
 TREE = {
     "start": {
-        "question": "Welcome! Do you want to begin the allyship assessment?",
-        "options": {
-            "1": ("Yes, let's begin", "intention_check"),
-            "2": ("No, maybe later", "end_later"),
-        }
-    },
-
-    # Intention
-    "intention_check": {
-        "question": "What is your underlying intention in offering support?",
-        "options": {
-            "1": ("Genuine care and respect", "self_reflection_1"),
-            "2": ("Mixed motives like approval-seeking", "self_reflection_1"),
-            "3": ("Uncertain / confused", "self_reflection_1"),
-        }
-    },
-
-    # Self-reflection
-    "self_reflection_1": {
-        "question": "Can you honestly acknowledge your motives without judgment?",
-        "options": {
-            "1": ("Yes", "self_reflection_2"),
-            "2": ("No, need to reflect more", "loop_self_reflection_1"),
-        }
-    },
-
-    "self_reflection_2": {
-        "question": "Can you support without expecting reciprocity or approval?",
-        "options": {
-            "1": ("Yes", "consent_awareness"),
-            "2": ("No, must reflect further", "loop_self_reflection_2"),
-        }
-    },
-
-    "loop_self_reflection_1": {
-        "question": "Take a moment to consider your motives carefully. Are you ready to proceed?",
-        "options": {
-            "1": ("Yes, I am ready", "self_reflection_1"),
-            "2": ("No, pause longer", "end_self_reflection_needed"),
-        }
-    },
-
-    "loop_self_reflection_2": {
-        "question": "Notice the tension in your capacity. Can you pause and revisit your intentions later?",
-        "options": {
-            "1": ("Yes, I can pause", "self_reflection_1"),
-            "2": ("No, continue anyway", "consent_awareness"),
-        }
-    },
-
-    # Consent
-    "consent_awareness": {
-        "question": "Have you observed any indication that support might be welcome?",
-        "options": {
-            "1": ("Yes", "capacity_check_1"),
-            "2": ("Maybe, uncertain", "ask_for_consent"),
-            "3": ("No", "end_respect_boundaries"),
-        }
-    },
-
-    "ask_for_consent": {
-        "question": "You may ask neutrally: 'Would it be okay if I could be someone who shows up as a friend whenever you want?'",
-        "options": {
-            "1": ("They say yes", "capacity_check_1"),
-            "2": ("They say maybe", "conditional_consent"),
-            "3": ("They say no", "end_respect_boundaries"),
-        }
-    },
-
-    "conditional_consent": {
-        "question": "They want the option without expectation. Do you fully commit to respecting this?",
-        "options": {
-            "1": ("Yes, fully committed", "capacity_check_1"),
-            "2": ("No, hesitant", "end_respect_boundaries"),
-        }
-    },
-
-    # Capacity
-    "capacity_check_1": {
-        "question": "Do you currently have the emotional capacity to support ethically?",
-        "options": {
-            "1": ("Yes, fully", "capacity_check_2"),
-            "2": ("Partially, I can be transparent", "capacity_check_2"),
-            "3": ("No, I need to wait", "end_cannot_support"),
-        }
-    },
-
-    "capacity_check_2": {
-        "question": "Can you support without taking over, imposing, or expecting reciprocation?",
-        "options": {
-            "1": ("Yes", "offer_support"),
-            "2": ("No", "loop_capacity_reflection"),
-        }
-    },
-
-    "loop_capacity_reflection": {
-        "question": "Pause and reflect on your limits. Are you ready to reassess your capacity now?",
-        "options": {
-            "1": ("Yes, reassess", "capacity_check_2"),
-            "2": ("No, I need more time", "end_self_reflection_needed"),
-        }
-    },
-
-    # Offering support
-    "offer_support": {
         "question": (
-            "You may now offer support ethically:\n"
-            "- Respect boundaries\n"
-            "- Stay responsive when invited\n"
-            "- Remain non-intrusive and patient"
+            "Greetings, intrepid explorer of subtle passions. Before you lies the task of affirming Yehuda, "
+            "a human being of exceedingly particular interests. This is not a task for the faint-hearted, nor "
+            "for those unwilling to gaze into the reflective pool of their own motives. Do you, with your fragile ego "
+            "and tentative intentions, believe yourself capable of embarking on this journey of affirmational exploration? "
+            "You must confront not only Yehuda's peculiar affinities, but also the unsettling depths of your own internal scripts."
         ),
         "options": {
-            "1": ("Proceed to long-term planning", "long_term_support"),
+            "1": ("Yes, I suppose I can try", "gelato_intro"),
+            "2": ("No, I am not ready to face my inadequacies", "end_not_ready"),
         }
     },
 
-    "long_term_support": {
+    # ----------------- Gelato -----------------
+    "gelato_intro": {
         "question": (
-            "Do you commit to long-term allyship?\n"
-            "Includes waiting for invitations, respecting boundaries, transparency, patience."
+            "Ah, gelato. Such an innocent word, yet it harbors multitudes. You may think, 'It’s just frozen cream,' "
+            "but oh, how naive you would be. Each flavor, each velvety texture, each whisper of cold air brushing the tongue "
+            "is laden with the psychic weight of existential joy and minor trauma. Do you wish to pause and meditate upon "
+            "the metaphysical implications of gelato before attempting to converse meaningfully with Yehuda?"
         ),
         "options": {
-            "1": ("Yes, fully committed", "ethical_support"),
-            "2": ("No, I need more preparation", "loop_self_reflection_2"),
+            "1": ("Yes, I shall meditate, however painfully", "gelato_flavor_reflection"),
+            "2": ("No, let me plunge recklessly into affirmation", "dubai_chocolate_intro"),
         }
     },
 
-    "ethical_support": {
+    "gelato_flavor_reflection": {
         "question": (
-            "You are now in Ethical Support Mode.\n"
-            "Stay responsive, non-intrusive, and always follow boundaries."
+            "Consider, if you can without shattering your sense of self: the pistachio, the hazelnut, "
+            "the chocolate that is not chocolate but a reflection of lost childhood dreams. Can you truly honor Yehuda’s preference "
+            "without succumbing to the insidious pull of your own vanilla biases? Remember, self-deception is the first whisper of catastrophe."
         ),
         "options": {
-            "1": ("Finish assessment", "end_success"),
+            "1": ("Yes, I can sublimate my biases", "gelato_textural_depth"),
+            "2": ("No, I am too self-absorbed", "dubai_chocolate_intro"),
         }
     },
 
-    # End nodes
-    "end_later": {"end": "Take your time. You can return later to begin the assessment."},
-    "end_self_reflection_needed": {"end": "Self-reflection needed. Pause and ground yourself before proceeding."},
-    "end_respect_boundaries": {"end": "Respect boundaries fully. Do not proceed."},
-    "end_cannot_support": {"end": "You do not have capacity. Offering support may be harmful."},
-    "end_success": {"end": "Congratulations! You may ethically show up as a friend when invited."},
+    "gelato_textural_depth": {
+        "question": (
+            "Do you possess the courage, or perhaps the foolhardy audacity, to discuss gelato with Yehuda "
+            "in a manner that conveys awareness of aeration, crystallization, and the slight, terrifying unpredictability of melted edges? "
+            "This is a test not only of your capacity to affirm but of your humility in acknowledging the sublime in small things."
+        ),
+        "options": {
+            "1": ("Yes, I shall proceed with trembling respect", "dubai_chocolate_intro"),
+            "2": ("No, my trembling will betray me", "loop_gelato_reflection"),
+        }
+    },
+
+    "loop_gelato_reflection": {
+        "question": (
+            "Pause. Breathe. Perhaps stare into a reflective surface and ask: 'Am I ready to encounter the unmediated experience of gelato, "
+            "to affirm without contaminating the sacred sphere of Yehuda’s delight?' Will you recommit, or forever remain in hesitant limbo?"
+        ),
+        "options": {
+            "1": ("Yes, I recommit, however shakily", "dubai_chocolate_intro"),
+            "2": ("No, I fear my own incompetence", "end_self_reflection_needed"),
+        }
+    },
+
+    # ----------------- Dubai Chocolate -----------------
+    "dubai_chocolate_intro": {
+        "question": (
+            "Onward, to Dubai chocolate — a terrain of complexity and occasional absurdity. "
+            "You may think chocolate is merely sweet, but Yehuda knows better. There is saffron, cardamom, rosewater, "
+            "and perhaps a lingering whisper of existential dread. Do you wish to linger in contemplation of these aromas, "
+            "or barrel ahead with reckless affirmation?"
+        ),
+        "options": {
+            "1": ("Yes, I shall inhale deeply the essence of Dubai chocolate", "dubai_chocolate_flavors"),
+            "2": ("No, forward, with all my naive certainty", "mini_split_intro"),
+        }
+    },
+
+    "dubai_chocolate_flavors": {
+        "question": (
+            "Think carefully: are you prepared to honor the delicate interplay between bitter cacao and fleeting sweetness, "
+            "to recognize that each bite is an allegory of choice, mortality, and subtle preference? "
+            "Can you discuss this without unintentionally asserting your unworthy opinions upon Yehuda?"
+        ),
+        "options": {
+            "1": ("Yes, I can suppress my ego", "mini_split_intro"),
+            "2": ("No, ego inevitably seeps through", "mini_split_intro"),
+        }
+    },
+
+    # ----------------- Mini Split AC -----------------
+    "mini_split_intro": {
+        "question": (
+            "Finally, we reach the towering edifice of Yehuda’s interests: the mini split air conditioning system. "
+            "Ah, SEER ratings, inverter technologies, ductless configurations — these are not mere appliances. "
+            "They are symbols of autonomy, comfort, and a peculiar obsession with silent hums. "
+            "Do you dare to study them in sufficient depth to affirm Yehuda competently, or will you bluff your way through with hollow nods?"
+        ),
+        "options": {
+            "1": ("Yes, I shall study until my mind aches", "mini_split_specs"),
+            "2": ("No, I shall bluff and hope for the best", "affirmation_summary"),
+        }
+    },
+
+    "mini_split_specs": {
+        "question": (
+            "Consider: the energy efficiency, the positioning of indoor units, the subtle art of temperature zoning. "
+            "Do you now feel capable of discussing these systems without the faintest tremor of condescension or unintended irony "
+            "creeping into your words?"
+        ),
+        "options": {
+            "1": ("Yes, tremor subdued", "affirmation_summary"),
+            "2": ("No, the weight is too great", "loop_ac_reflection"),
+        }
+    },
+
+    "loop_ac_reflection": {
+        "question": (
+            "Pause. Reflect. Feel the unsettling pull of inadequacy. Can you, after meditation and gentle self-scolding, "
+            "recommit to affirming Yehuda’s interests without contamination of your ego?"
+        ),
+        "options": {
+            "1": ("Yes, I recommit, trembling and enlightened", "affirmation_summary"),
+            "2": ("No, I retreat into shadow", "end_self_reflection_needed"),
+        }
+    },
+
+    # ----------------- Affirmation Summary -----------------
+    "affirmation_summary": {
+        "question": (
+            "You have traversed the labyrinthine corridors of gelato, Dubai chocolate, and mini split air conditioning systems. "
+            "Shall we now summarize your journey, your choices, your tentative acts of affirmation, and gaze collectively upon the tapestry "
+            "of your own hesitant self-awareness?"
+        ),
+        "options": {
+            "1": ("Yes, show me the tapestry", "end_success"),
+        }
+    },
+
+    # ----------------- End Nodes -----------------
+    "end_not_ready": {
+        "end": "You hesitated and withdrew. Perhaps one day you will find the courage to face your own subtle flaws and affirm Yehuda's interests with care."
+    },
+    "end_self_reflection_needed": {
+        "end": "Your internal conflicts are too pronounced. Self-reflection and contemplation are required before any genuine affirmation can occur."
+    },
+    "end_success": {
+        "end": "Congratulations. You have wandered through the cognitive jungle of Yehuda’s interests, faced your own psychological eccentricities, and emerged with the capacity to affirm responsibly."
+    },
 }
 
 # ------------------------------
@@ -161,7 +165,7 @@ TREE = {
 @app.route("/", methods=["GET", "POST"])
 def index():
     session.clear()
-    session['answers'] = []  # Initialize answer tracking
+    session['answers'] = []
     return redirect(url_for("node", node="start"))
 
 @app.route("/node/<node>", methods=["GET", "POST"])
@@ -170,14 +174,12 @@ def node(node):
     if not data:
         return "Invalid node", 404
 
-    # Initialize answers if not already
     if 'answers' not in session:
         session['answers'] = []
 
     # Handle POST selection
     if request.method == "POST":
         next_node = request.form.get("option")
-        # Record the selected answer
         if next_node:
             selected_text = None
             for key, (text, n_node) in data.get("options", {}).items():
@@ -190,7 +192,6 @@ def node(node):
 
     # Handle end nodes
     if "end" in data:
-        # Generate paragraph form summary
         paragraph = " ".join(session.get('answers', []))
         final_message = f"{data['end']}\n\nSummary of your choices:\n{paragraph}"
         return render_template("node.html", question=final_message, options={}, end=True, error=None)
