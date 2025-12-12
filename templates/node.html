@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ question|replace('\n','<br>')|safe }}</h2>
+<div class="container">
+    <p><strong>Stats:</strong> Integrity: {{ stats.integrity }}, Reflection: {{ stats.reflection }}, Ego Risk: {{ stats.ego_risk }}</p>
+    <h2>{{ question|replace('\n','<br>')|safe }}</h2>
 
-{% if error %}
-<p style="color:red">{{ error }}</p>
-{% endif %}
-
-{% if not end %}
-<form method="POST">
-    {% for key, (text, next_node) in options.items() %}
-        <button type="submit" name="option" value="{{ next_node }}">{{ text }}</button><br>
-    {% endfor %}
-</form>
-{% else %}
-<p>The assessment is complete.</p>
-{% endif %}
+    {% if not end %}
+    <form method="POST">
+        {% for key, (text, next_node) in options.items() %}
+            <input type="hidden" name="option_text" value="{{ text }}">
+            <button class="choice-btn" type="submit" name="option" value="{{ next_node }}">{{ text }}</button>
+        {% endfor %}
+    </form>
+    {% else %}
+    <p>The affirmation journey is complete.</p>
+    {% endif %}
+</div>
 {% endblock %}
