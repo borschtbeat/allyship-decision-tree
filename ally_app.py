@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"
 
 # ------------------------------
-# Ultra-Convoluted Decision Tree (No Name Tracking)
+# Ultra-Convoluted Decision Tree (Track Answers)
 # ------------------------------
 
 TREE = {
@@ -16,7 +16,7 @@ TREE = {
         }
     },
 
-    # ----------------- Intention -----------------
+    # Intention
     "intention_check": {
         "question": "What is your underlying intention in offering support?",
         "options": {
@@ -26,7 +26,7 @@ TREE = {
         }
     },
 
-    # ----------------- Self Reflection Loops -----------------
+    # Self-reflection
     "self_reflection_1": {
         "question": "Can you honestly acknowledge your motives without judgment?",
         "options": {
@@ -59,7 +59,7 @@ TREE = {
         }
     },
 
-    # ----------------- Consent -----------------
+    # Consent
     "consent_awareness": {
         "question": "Have you observed any indication that support might be welcome?",
         "options": {
@@ -86,7 +86,7 @@ TREE = {
         }
     },
 
-    # ----------------- Capacity Checks -----------------
+    # Capacity
     "capacity_check_1": {
         "question": "Do you currently have the emotional capacity to support ethically?",
         "options": {
@@ -112,7 +112,7 @@ TREE = {
         }
     },
 
-    # ----------------- Offering Support -----------------
+    # Offering support
     "offer_support": {
         "question": (
             "You may now offer support ethically:\n"
@@ -125,7 +125,6 @@ TREE = {
         }
     },
 
-    # ----------------- Long-Term Support -----------------
     "long_term_support": {
         "question": (
             "Do you commit to long-term allyship?\n"
@@ -147,7 +146,7 @@ TREE = {
         }
     },
 
-    # ----------------- End Nodes -----------------
+    # End nodes
     "end_later": {"end": "Take your time. You can return later to begin the assessment."},
     "end_self_reflection_needed": {"end": "Self-reflection needed. Pause and ground yourself before proceeding."},
     "end_respect_boundaries": {"end": "Respect boundaries fully. Do not proceed."},
@@ -161,6 +160,8 @@ TREE = {
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    session.clear()
+    session['answers'] = []  # Initialize answer tracking
     return redirect(url_for("node", node="start"))
 
 @app.route("/node/<node>", methods=["GET", "POST"])
@@ -169,15 +170,30 @@ def node(node):
     if not data:
         return "Invalid node", 404
 
-    # Handle end nodes
-    if "end" in data:
-        return render_template("node.html", question=data["end"], options={}, end=True, error=None)
+    # Initialize answers if not already
+    if 'answers' not in session:
+        session['answers'] = []
 
     # Handle POST selection
     if request.method == "POST":
         next_node = request.form.get("option")
-        if next_node in TREE:
+        # Record the selected answer
+        if next_node:
+            selected_text = None
+            for key, (text, n_node) in data.get("options", {}).items():
+                if n_node == next_node:
+                    selected_text = text
+                    break
+            if selected_text:
+                session['answers'].append(f"{data['question']} You chose: {selected_text}.")
             return redirect(url_for("node", node=next_node))
+
+    # Handle end nodes
+    if "end" in data:
+        # Generate paragraph form summary
+        paragraph = " ".join(session.get('answers', []))
+        final_message = f"{data['end']}\n\nSummary of your choices:\n{paragraph}"
+        return render_template("node.html", question=final_message, options={}, end=True, error=None)
 
     return render_template("node.html", question=data["question"], options=data.get("options", {}), end=False, error=None)
 
