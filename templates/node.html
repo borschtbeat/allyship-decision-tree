@@ -1,25 +1,24 @@
 {% extends "base.html" %}
+
 {% block content %}
+<h2>{{ question }}</h2>
 
-<h1>Decision Node</h1>
-
-<div class="card">
-    <p class="question">{{ question }}</p>
-</div>
-
-{% if not end %}
-    <div class="options">
-        {% for key, (label, nextnode) in options.items() %}
-        <a class="button" href="{{ url_for('node', node=nextnode) }}">
-            {{ key }} — {{ label }}
-        </a>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="end-message">
-        <p>{{ question }}</p>
-        <a class="button" href="{{ url_for('index') }}">Restart</a>
-    </div>
+{% if error %}
+<p style="color:red">{{ error }}</p>
 {% endif %}
 
+{% if end %}
+<p>The assessment is complete.</p>
+{% else %}
+<form method="POST">
+    {% if node == 'start' %}
+        <input type="text" name="name_input" placeholder="Your name" required>
+        <button type="submit">Submit</button>
+    {% else %}
+        {% for key, (text, next_node) in options.items() %}
+            <button type="submit" name="option" value="{{ next_node }}">{{ text }}</button><br>
+        {% endfor %}
+    {% endif %}
+</form>
+{% endif %}
 {% endblock %}
