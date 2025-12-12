@@ -1,24 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ question }}</h2>
+<h2>{{ question|replace('\n','<br>')|safe }}</h2>
 
 {% if error %}
 <p style="color:red">{{ error }}</p>
 {% endif %}
 
-{% if end %}
-<p>The assessment is complete.</p>
-{% else %}
+{% if not end %}
 <form method="POST">
-    {% if node == 'start' %}
-        <input type="text" name="name_input" placeholder="Your name" required>
-        <button type="submit">Submit</button>
-    {% else %}
-        {% for key, (text, next_node) in options.items() %}
-            <button type="submit" name="option" value="{{ next_node }}">{{ text }}</button><br>
-        {% endfor %}
-    {% endif %}
+    {% for key, (text, next_node) in options.items() %}
+        <button type="submit" name="option" value="{{ next_node }}">{{ text }}</button><br>
+    {% endfor %}
 </form>
+{% else %}
+<p>The assessment is complete.</p>
 {% endif %}
 {% endblock %}
