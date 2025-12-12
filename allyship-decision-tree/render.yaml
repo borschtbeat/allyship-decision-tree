@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: allyship-decision-tree
-    env: python
-    buildCommand: ""
-    startCommand: gunicorn ally_app:app
-    plan: free
-    region: oregon
