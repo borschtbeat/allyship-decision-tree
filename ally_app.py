@@ -1,146 +1,194 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+import random
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey_game"
+app.secret_key = "supersecretkey_labyrinth_v2"
 
 # ------------------------------
-# Stats & Multi-Path Tree
+# Stats & Sequence Tracking
 # ------------------------------
+INITIAL_STATS = {'integrity': 50, 'reflection': 50, 'ego_risk': 50}
+MAX_REFLECTION = 100
+MAX_EGO = 100
 
-TREE = {
-    "start": {
-        "question": (
-            "Welcome, intrepid adventurer of subtle passions. Your task is to affirm Yehuda, "
-            "a human of exquisite and particular interests. Be warned: this journey will confront your ego, "
-            "challenge your capacity for reflection, and demand attention to detail. Are you prepared?"
-        ),
-        "options": {
-            "1": ("Yes, I will attempt this arduous task", "gelato_intro"),
-            "2": ("No, I need more courage", "end_not_ready"),
-        }
-    },
-
-    # Gelato branch
-    "gelato_intro": {
-        "question": (
-            "Gelato: more than dessert, it is an existential experience. "
-            "Do you wish to meditate on textures and flavors before proceeding, or act without reflection?"
-        ),
-        "options": {
-            "1": ("Meditate deeply on gelato", "gelato_flavors"),
-            "2": ("Act without reflection", "dubai_chocolate_intro"),
-        }
-    },
-
-    "gelato_flavors": {
-        "question": (
-            "Consider pistachio, chocolate, stracciatella: delicate interplay of cream, air, and subtle crunch. "
-            "Can you honor Yehuda's preference without inserting your own faint biases?"
-        ),
-        "options": {
-            "1": ("Yes, I can suppress my biases", "dubai_chocolate_intro"),
-            "2": ("No, ego interferes", "loop_gelato_reflection"),
-        }
-    },
-
-    "loop_gelato_reflection": {
-        "question": (
-            "You hesitate. Look into your own tendencies: do you retreat or recommit to careful affirmation?"
-        ),
-        "options": {
-            "1": ("Recommit, however trembling", "dubai_chocolate_intro"),
-            "2": ("Retreat, acknowledge limits", "end_self_reflection_needed"),
-        }
-    },
-
-    # Dubai Chocolate branch
-    "dubai_chocolate_intro": {
-        "question": (
-            "Dubai chocolate: saffron, cardamom, rosewater. Will you study these flavors deeply "
-            "or nod along without comprehension?"
-        ),
-        "options": {
-            "1": ("Study deeply", "dubai_chocolate_flavors"),
-            "2": ("Nod along", "mini_split_intro"),
-        }
-    },
-
-    "dubai_chocolate_flavors": {
-        "question": (
-            "Reflect on cacao origin, roast, and bitter-sweet balance. "
-            "Can you affirm without imposing ego-driven opinions?"
-        ),
-        "options": {
-            "1": ("Yes, ego subdued", "mini_split_intro"),
-            "2": ("No, ego intrudes", "mini_split_intro"),
-        }
-    },
-
-    # Mini split AC branch
-    "mini_split_intro": {
-        "question": (
-            "Mini split AC systems: a symbol of comfort, autonomy, and obsessive precision. "
-            "Will you immerse yourself in technical reflection, or bluff confidently?"
-        ),
-        "options": {
-            "1": ("Immerse in technical reflection", "mini_split_specs"),
-            "2": ("Bluff confidently", "affirmation_summary"),
-        }
-    },
-
-    "mini_split_specs": {
-        "question": (
-            "Consider SEER ratings, inverter tech, silent operation. "
-            "Can you affirm without condescension or irony?"
-        ),
-        "options": {
-            "1": ("Yes, fully affirm", "affirmation_summary"),
-            "2": ("No, too intimidating", "loop_ac_reflection"),
-        }
-    },
-
-    "loop_ac_reflection": {
-        "question": (
-            "Pause. Breathe. Will you recommit to affirming Yehuda while confronting your ego?"
-        ),
-        "options": {
-            "1": ("Yes, recommit", "affirmation_summary"),
-            "2": ("No, retreat", "end_self_reflection_needed"),
-        }
-    },
-
-    # Summary node
-    "affirmation_summary": {
-        "question": (
-            "You have navigated the labyrinth of gelato, Dubai chocolate, and mini split AC systems. "
-            "Shall we review your choices, the evolution of your stats, and the subtle reflection of your ego?"
-        ),
-        "options": {
-            "1": ("Yes, show summary", "end_success"),
-        }
-    },
-
-    # End nodes
-    "end_not_ready": {
-        "end": "You hesitated and withdrew. Perhaps reflection will aid future affirmation."
-    },
-    "end_self_reflection_needed": {
-        "end": "Internal conflicts prevent further progress. Self-reflection required."
-    },
-    "end_success": {
-        "end": "Congratulations! You have affirmed Yehuda’s interests while navigating your ego and reflection carefully."
-    },
+# Track sequences for mini-puzzles
+PUZZLE_SEQUENCES = {
+    "affirm_order": ["gelato_intro", "dubai_chocolate_intro", "mini_split_intro"]
 }
 
 # ------------------------------
-# Routes & Game Logic
+# Node Tree with Mechanics
 # ------------------------------
+TREE = {
+    "start": {
+        "question": (
+            "Welcome, brave explorer of cognitive oddities. "
+            "Your mission: affirm Yehuda’s interests across Gelato, Dubai Chocolate, and Mini Split AC. "
+            "Beware: your ego, attention, and reflection will be tested."
+        ),
+        "options": {
+            "1": {"text": "Yes, I accept this daunting challenge", "next": "gelato_intro"},
+            "2": {"text": "No, I must flee reality", "next": "end_not_ready"},
+        }
+    },
 
+    # ---------------- Gelato Branch ----------------
+    "gelato_intro": {
+        "question": (
+            "Gelato: not mere dessert, but an existential experience. "
+            "Do you meditate on its flavors or proceed recklessly?"
+        ),
+        "options": {
+            "1": {"text": "Meditate deeply", "next": "gelato_flavors", "stats": {"reflection": +10, "ego_risk": -5}},
+            "2": {"text": "Act recklessly", "next": "dubai_chocolate_intro", "stats": {"ego_risk": +10}},
+        }
+    },
+    "gelato_flavors": {
+        "question": (
+            "Consider pistachio, stracciatella, chocolate — metaphors for your own anxieties. "
+            "Do you fully confront them or partially avoid reflection?"
+        ),
+        "options": {
+            "1": {"text": "Fully confront", "next": "gelato_secret_meditation", "stats": {"reflection": +15, "integrity": +5}},
+            "2": {"text": "Partially avoid", "next": "loop_gelato_reflection", "stats": {"ego_risk": +5}},
+        }
+    },
+    "gelato_secret_meditation": {
+        "requirements": {"reflection_min": 60, "ego_max": 50},  # conditional unlock
+        "question": (
+            "Secret Gelato Meditation unlocked! Pistachio cream as metaphor for impermanence. "
+            "Do you meditate fully or retreat?"
+        ),
+        "options": {
+            "1": {"text": "Meditate fully", "next": "dubai_chocolate_intro", "stats": {"reflection": +10, "ego_risk": -10}},
+            "2": {"text": "Retreat", "next": "loop_gelato_reflection", "stats": {"ego_risk": +10}},
+        }
+    },
+    "loop_gelato_reflection": {
+        "question": (
+            "You hesitate. Recommit or retreat? This may loop until you confront your ego."
+        ),
+        "options": {
+            "1": {"text": "Recommit", "next": "dubai_chocolate_intro", "stats": {"reflection": +5, "ego_risk": +5}},
+            "2": {"text": "Retreat", "next": "end_self_reflection_needed"},
+        }
+    },
+
+    # ---------------- Dubai Chocolate Branch ----------------
+    "dubai_chocolate_intro": {
+        "question": (
+            "Dubai Chocolate: saffron, cardamom, rosewater, existential dread. "
+            "Study deeply or nod blindly?"
+        ),
+        "options": {
+            "1": {"text": "Study deeply", "next": "dubai_chocolate_flavors", "stats": {"reflection": +10}},
+            "2": {"text": "Nod blindly", "next": "mini_split_intro", "stats": {"ego_risk": +5}},
+        }
+    },
+    "dubai_chocolate_flavors": {
+        "question": (
+            "Reflect on origin, roast, bitter-sweet harmony. Can you affirm without ego interference?"
+        ),
+        "options": {
+            "1": {"text": "Suppress ego", "next": "mini_split_intro", "stats": {"reflection": +10, "ego_risk": -5}},
+            "2": {"text": "Ego interferes", "next": "mini_split_intro", "stats": {"ego_risk": +10}},
+        }
+    },
+
+    # ---------------- Mini Split AC Branch ----------------
+    "mini_split_intro": {
+        "question": (
+            "Mini Split AC systems: hum silently, control comfort, represent obsession. "
+            "Immerse in technical reflection or bluff confidently?"
+        ),
+        "options": {
+            "1": {"text": "Immerse", "next": "mini_split_specs", "stats": {"reflection": +10}},
+            "2": {"text": "Bluff", "next": "affirmation_summary", "stats": {"ego_risk": +10}},
+        }
+    },
+    "mini_split_specs": {
+        "question": (
+            "SEER ratings, inverter tech, silent operation. Affirm without condescension or irony?"
+        ),
+        "options": {
+            "1": {"text": "Yes, affirm humbly", "next": "affirmation_summary", "stats": {"integrity": +10}},
+            "2": {"text": "No, too intimidating", "next": "loop_ac_reflection", "stats": {"ego_risk": +10}},
+        }
+    },
+    "loop_ac_reflection": {
+        "question": (
+            "Your ego trembles. Recommit or retreat?"
+        ),
+        "options": {
+            "1": {"text": "Recommit", "next": "affirmation_summary", "stats": {"reflection": +5, "ego_risk": +5}},
+            "2": {"text": "Retreat", "next": "end_self_reflection_needed"},
+        }
+    },
+
+    # ---------------- Mini-Puzzle Hidden Node ----------------
+    "affirmation_order_puzzle": {
+        "requirements": {"sequence": PUZZLE_SEQUENCES["affirm_order"]},
+        "question": (
+            "You notice a hidden order challenge: affirm Gelato, Dubai Chocolate, and Mini Split AC in sequence. "
+            "Success unlocks the secret meta-reflection node."
+        ),
+        "options": {
+            "1": {"text": "Attempt sequence", "next": "secret_meta_reflection", "stats": {"integrity": +15, "reflection": +10}},
+        }
+    },
+    "secret_meta_reflection": {
+        "question": (
+            "Congratulations! You unlocked the meta-reflection: your careful attention has been noted. "
+            "You now understand the absurd labyrinth of affirmation at a higher level."
+        ),
+        "options": {
+            "1": {"text": "Proceed to summary", "next": "affirmation_summary"},
+        }
+    },
+
+    # ---------------- Affirmation Summary ----------------
+    "affirmation_summary": {
+        "question": (
+            "You have traversed Gelato, Dubai Chocolate, Mini Split AC, confronted loops, puzzles, and hidden paths. "
+            "Shall we review your labyrinthine choices and evolving stats?"
+        ),
+        "options": {
+            "1": {"text": "Yes, show summary", "next": "end_success"},
+        }
+    },
+
+    # ---------------- End Nodes ----------------
+    "end_not_ready": {"end": "You fled. Courage may return another day."},
+    "end_self_reflection_needed": {"end": "Hesitation signals need for self-reflection."},
+    "end_success": {"end": "Congratulations! You affirmed Yehuda's interests while navigating absurd labyrinthine challenges."}
+}
+
+# ------------------------------
+# Helper Functions
+# ------------------------------
+def check_requirements(node_id):
+    node = TREE[node_id]
+    reqs = node.get("requirements", {})
+    stats = session.get("stats", INITIAL_STATS)
+    sequence = session.get("sequence", [])
+    # Check reflection
+    if "reflection_min" in reqs and stats["reflection"] < reqs["reflection_min"]:
+        return False
+    if "ego_max" in reqs and stats["ego_risk"] > reqs["ego_max"]:
+        return False
+    if "sequence" in reqs and sequence[-len(reqs["sequence"]):] != reqs["sequence"]:
+        return False
+    return True
+
+# ------------------------------
+# Routes
+# ------------------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
     session.clear()
     session['answers'] = []
-    session['stats'] = {'integrity': 50, 'reflection': 50, 'ego_risk': 50}
+    session['stats'] = INITIAL_STATS.copy()
+    session['sequence'] = []
     return redirect(url_for("node", node="start"))
 
 @app.route("/node/<node>", methods=["GET", "POST"])
@@ -153,17 +201,31 @@ def node(node):
         session['answers'] = []
 
     if request.method == "POST":
-        next_node = request.form.get("option")
-        if next_node:
-            # Adjust stats slightly based on choices
-            if next_node in ['gelato_flavors', 'dubai_chocolate_flavors', 'mini_split_specs']:
-                session['stats']['reflection'] += 10
-                session['stats']['ego_risk'] -= 5
-            elif next_node in ['loop_gelato_reflection', 'loop_ac_reflection']:
-                session['stats']['reflection'] += 5
-                session['stats']['ego_risk'] += 5
-            session['answers'].append(f"{data['question']} You chose: {request.form.get('option_text', next_node)}.")
-            return redirect(url_for("node", node=next_node))
+        selected = request.form.get("option")
+        selected_text = request.form.get("option_text", "")
+        next_node = TREE[node]["options"][selected]["next"]
+        stats_effects = TREE[node]["options"][selected].get("stats", {})
+
+        # Update stats dynamically
+        for k, v in stats_effects.items():
+            session['stats'][k] = max(0, session['stats'][k] + v)
+            if k == "reflection":
+                session['stats'][k] = min(MAX_REFLECTION, session['stats'][k])
+            if k == "ego_risk":
+                session['stats'][k] = min(MAX_EGO, session['stats'][k])
+
+        # Track sequence for puzzles
+        session['sequence'].append(node)
+
+        # Track paragraph summary
+        session['answers'].append(f"{data['question']} You chose: {selected_text}")
+
+        # Check if next node is hidden/puzzle
+        if "requirements" in TREE.get(next_node, {}) and not check_requirements(next_node):
+            # skip to fallback if requirements not met
+            return redirect(url_for("node", node="affirmation_summary"))
+
+        return redirect(url_for("node", node=next_node))
 
     # End node
     if "end" in data:
@@ -174,8 +236,7 @@ def node(node):
     return render_template("node.html", question=data["question"], options=data.get("options", {}), end=False, stats=session['stats'])
 
 # ------------------------------
-# Run App
+# Run
 # ------------------------------
-
 if __name__ == "__main__":
     app.run(debug=True)
