@@ -1,306 +1,258 @@
-#!/usr/bin/env python3
-# Ultra-Complex Allyship Decision Tree (Text-based, Clickable Menus)
-# ---------------------------------------------------------------
-# “Should I (a man) offer to show up for Joanna as a friend?”
-#
-# Designed for maximal complexity while maintaining readability.
+from flask import Flask, render_template, request, redirect, url_for
 
-import sys
-import time
+app = Flask(__name__)
 
-# ---- Utility Functions ----
+# ------------------------------
+# Decision Tree Structure
+# ------------------------------
 
-def slow(text):
-    """Print text slowly for effect."""
-    for c in text:
-        print(c, end='', flush=True)
-        time.sleep(0.002)
-    print()
-
-def choose(prompt, options):
-    """
-    Display a menu and allow user to click (enter) a choice.
-    Returns the key of the chosen option.
-    """
-    slow("\n" + prompt + "\n")
-    for key, label in options.items():
-        print(f"  [{key}] {label}")
-    while True:
-        choice = input("\nSelect option: ").strip()
-        if choice in options:
-            return choice
-        print("Invalid choice. Try again.")
-
-
-# ---- The Decision Tree ----
-
-def root_intention():
-    choice = choose(
-        "ROOT NODE (0): What is your true intention?",
-        {
-            "1": "Genuine care & respect for Joanna's autonomy",
-            "2": "Motivated by guilt, approval-seeking, romantic longing, or saviorism",
-            "3": "I'm not sure what my intention is"
+TREE = {
+    "root": {
+        "question": "ROOT NODE (0): What is your true intention?",
+        "options": {
+            "1": ("Genuine care & respect for Joanna's autonomy", "intention_yes"),
+            "2": ("Motivated by guilt, approval-seeking, romantic longing, or saviorism", "intention_no"),
+            "3": ("I'm not sure what my intention is", "self_inquiry"),
         }
-    )
-    if choice == "1":
-        return intention_integrity(True)
-    elif choice == "2":
-        return intention_integrity(False)
-    else:
-        return self_inquiry()
+    },
 
-
-def intention_integrity(passed):
-    if not passed:
-        slow("\nYou acknowledged non-ideal motivations → Intention-Integrity Check triggered.")
-    else:
-        slow("\nProceeding through intention check with positive alignment…")
-
-    choice = choose(
-        "0A: Can you strip your offer of all expectations?",
-        {
-            "1": "Yes",
-            "2": "No"
+    # ----------------------------------
+    # Intention Checks
+    # ----------------------------------
+    "intention_yes": {
+        "question": "0A: Can you strip your offer of all expectations?",
+        "options": {
+            "1": ("Yes", "external_safety"),
+            "2": ("No", "self_inquiry"),
         }
-    )
+    },
 
-    if choice == "1":
-        return external_safety()
-    else:
-        return self_inquiry()
-
-
-def self_inquiry():
-    slow("\n0B: Self-Inquiry Loop engaged. Reflect on these questions:")
-    slow("• Are you asking for her trust before earning it?")
-    slow("• Are you trying to fix instead of support?")
-    slow("• Are you emotionally grounded enough to help without burdening?")
-    choice = choose(
-        "Did you answer YES to at least 2/3?",
-        {
-            "1": "Yes",
-            "2": "No"
+    "intention_no": {
+        "question": "0A: Can you strip your offer of all expectations?",
+        "options": {
+            "1": ("Yes", "external_safety"),
+            "2": ("No", "self_inquiry"),
         }
-    )
-    if choice == "1":
-        return root_intention()
-    else:
-        return allyship_readiness()
+    },
 
-
-def allyship_readiness():
-    slow("\n0C: Allyship Readiness Node Activated.")
-    choice = choose(
-        "Do you respect boundaries without resentment?",
-        {
-            "1": "Yes, fully",
-            "2": "No, boundaries frustrate me"
+    # ----------------------------------
+    # Self-Inquiry Loop
+    # ----------------------------------
+    "self_inquiry": {
+        "question": (
+            "0B: Self-Inquiry Loop\n"
+            "Did you answer YES to at least 2/3?\n"
+            "• Are you asking for her trust before earning it?\n"
+            "• Are you trying to fix instead of support?\n"
+            "• Are you emotionally grounded enough to help without burdening?"
+        ),
+        "options": {
+            "1": ("Yes", "root"),
+            "2": ("No", "allyship_readiness"),
         }
-    )
-    if choice == "2":
-        return end("Not ready. True allyship requires respect without resentment.")
+    },
 
-    choice2 = choose(
-        "Do you accept that allyship means offering proximity ONLY when invited?",
-        {
-            "1": "Yes",
-            "2": "No"
+    # ----------------------------------
+    # Allyship Readiness
+    # ----------------------------------
+    "allyship_readiness": {
+        "question": "0C: Do you respect boundaries without resentment?",
+        "options": {
+            "1": ("Yes", "allyship_readiness_2"),
+            "2": ("No", "end_not_ready_1"),
         }
-    )
-    if choice2 == "2":
-        return end("Not ready. Allyship requires non-intrusiveness.")
+    },
 
-    choice3 = choose(
-        "Can you be dependable without being intrusive?",
-        {
-            "1": "Yes",
-            "2": "No"
+    "allyship_readiness_2": {
+        "question": "Do you accept that allyship means only offering proximity when INVITED?",
+        "options": {
+            "1": ("Yes", "allyship_readiness_3"),
+            "2": ("No", "end_not_ready_2"),
         }
-    )
-    if choice3 == "2":
-        return end("Not ready. Work on balanced presence.")
-    
-    return external_safety()
+    },
 
-
-def external_safety():
-    choice = choose(
-        "1: External Safety Check — Does Joanna feel safe around you?",
-        {
-            "1": "Yes",
-            "2": "Unsure",
-            "3": "No"
+    "allyship_readiness_3": {
+        "question": "Can you be dependable without being intrusive?",
+        "options": {
+            "1": ("Yes", "external_safety"),
+            "2": ("No", "end_not_ready_3"),
         }
-    )
-    if choice == "1":
-        return consent_autonomy()
-    elif choice == "2":
-        return safety_clarity()
-    else:
-        return end("STOP. Respect boundaries. Safety is non-negotiable.")
+    },
 
-
-def safety_clarity():
-    choice = choose(
-        "1A: Ask neutrally: 'Would it feel comfortable if I offered support?'",
-        {
-            "1": "Yes, I can ask",
-            "2": "No, I can't ask"
+    # ----------------------------------
+    # Safety Checks
+    # ----------------------------------
+    "external_safety": {
+        "question": "1: Does Joanna feel safe around you?",
+        "options": {
+            "1": ("Yes", "consent_autonomy"),
+            "2": ("Unsure", "safety_clarity"),
+            "3": ("No", "end_safety"),
         }
-    )
-    if choice == "1":
-        return consent_autonomy()
-    else:
-        return end("Without comfort asking, support cannot proceed.")
+    },
 
-
-def consent_autonomy():
-    choice = choose(
-        "2: Has Joanna EVER shown she would welcome support?",
-        {
-            "1": "Yes",
-            "2": "No / Not sure"
+    "safety_clarity": {
+        "question": "1A: Can you ask neutrally: 'Would it feel comfortable if I offered support?'",
+        "options": {
+            "1": ("Yes", "consent_autonomy"),
+            "2": ("No", "end_cannot_ask"),
         }
-    )
-    if choice == "1":
-        return capacity_check()
-    else:
-        return consent_inquiry()
+    },
 
-
-def consent_inquiry():
-    choice = choose(
-        "2A: Ask: 'Would you want me to be someone who can show up when you want?'",
-        {
-            "1": "She says YES",
-            "2": "She says MAYBE",
-            "3": "She says NO"
+    # ----------------------------------
+    # Consent & Autonomy
+    # ----------------------------------
+    "consent_autonomy": {
+        "question": "2: Has Joanna EVER shown she would welcome support?",
+        "options": {
+            "1": ("Yes", "capacity_check"),
+            "2": ("No / Not sure", "consent_inquiry"),
         }
-    )
-    if choice == "1":
-        return capacity_check()
-    elif choice == "2":
-        return conditional_consent()
-    else:
-        return end("She said no. Respect and do not revisit unless she initiates.")
+    },
 
-
-def conditional_consent():
-    choice = choose(
-        "2B: Does she want the OPTION of support without expectation?",
-        {
-            "1": "Yes",
-            "2": "No",
-            "3": "Wants to revisit later"
+    "consent_inquiry": {
+        "question": "2A: She is asked: 'Would you want me to be someone who can show up when you want?'",
+        "options": {
+            "1": ("She says YES", "capacity_check"),
+            "2": ("She says MAYBE", "conditional_consent"),
+            "3": ("She says NO", "end_boundaries_no"),
         }
-    )
-    if choice == "1":
-        return capacity_check()
-    elif choice == "2":
-        return end("Respectfully withdraw; boundaries are clear.")
-    else:
-        return long_term_mode()
+    },
 
-
-def long_term_mode():
-    slow("\n5: Entering Long-Term Allyship Mode.")
-    slow("Maintain respectful distance and only re-check if SHE brings it up later.")
-    return end("Outcome: Stay present without pressure.")
-
-
-def capacity_check():
-    choice = choose(
-        "3: Do YOU have emotional capacity to show up?",
-        {
-            "1": "Yes, enough capacity",
-            "2": "Capacity limited",
-            "3": "No capacity"
+    "conditional_consent": {
+        "question": "2B: Does she want the OPTION of support without expectation?",
+        "options": {
+            "1": ("Yes", "capacity_check"),
+            "2": ("No", "end_no_option"),
+            "3": ("Wants to revisit later", "long_term_mode"),
         }
-    )
-    if choice == "1":
-        return healthy_capacity()
-    elif choice == "2":
-        return limited_capacity()
-    else:
-        return end("Without capacity, offering support would be dishonest.")
+    },
 
-
-def healthy_capacity():
-    choice = choose(
-        "3A: Can you support without taking over, depending, or expecting?",
-        {
-            "1": "Yes",
-            "2": "No"
+    "long_term_mode": {
+        "question": "5: Long-Term Allyship Mode.\nStay present. Wait for HER to reopen the topic.",
+        "options": {
+            "1": ("Finish", "end_longterm")
         }
-    )
-    if choice == "1":
-        return the_offer()
-    else:
-        return end("Support requires non-intrusive balance.")
+    },
 
-
-def limited_capacity():
-    choice = choose(
-        "3B: Can you transparently say your capacity is limited?",
-        {
-            "1": "Yes",
-            "2": "No"
+    # ----------------------------------
+    # Capacity Checks
+    # ----------------------------------
+    "capacity_check": {
+        "question": "3: Do YOU have emotional capacity to show up?",
+        "options": {
+            "1": ("Yes, enough capacity", "capacity_healthy"),
+            "2": ("Capacity limited", "capacity_limited"),
+            "3": ("No capacity", "end_no_capacity"),
         }
-    )
-    if choice == "1":
-        return the_offer()
-    else:
-        return end("Transparency is required; without it, you shouldn't offer.")
+    },
 
-
-def the_offer():
-    choice = choose(
-        "4: Make the Offer:\n"
-        "'Would you want me to be someone who can show up as a friend whenever you want?'",
-        {
-            "1": "She says YES",
-            "2": "She says NO",
-            "3": "She says MAYBE"
+    "capacity_healthy": {
+        "question": "3A: Can you support without taking over, depending, or expecting?",
+        "options": {
+            "1": ("Yes", "offer"),
+            "2": ("No", "end_invasive"),
         }
-    )
-    if choice == "1":
-        return post_consent()
-    elif choice == "2":
-        return end("Respectfully step back. Allyship honors 'No.'")
-    else:
-        return conditional_consent()
+    },
 
-
-def post_consent():
-    slow("\n6: Post-Consent Behavior Mode.")
-    choice = choose(
-        "Clarify boundaries?",
-        {
-            "1": "Yes, clarify boundaries",
-            "2": "Skip boundary clarification (NOT recommended)"
+    "capacity_limited": {
+        "question": "3B: Can you be transparent about limited capacity?",
+        "options": {
+            "1": ("Yes", "offer"),
+            "2": ("No", "end_dishonest"),
         }
+    },
+
+    # ----------------------------------
+    # Offer
+    # ----------------------------------
+    "offer": {
+        "question": (
+            "4: OFFER:\n"
+            "'Would you want me to be someone who can show up as a friend whenever you want?'"
+        ),
+        "options": {
+            "1": ("She says YES", "post_consent"),
+            "2": ("She says NO", "end_no"),
+            "3": ("She says MAYBE", "conditional_consent"),
+        }
+    },
+
+    # ----------------------------------
+    # Post-Consent Behavior
+    # ----------------------------------
+    "post_consent": {
+        "question": "6: Clarify boundaries?",
+        "options": {
+            "1": ("Yes, clarify", "ethical_support"),
+            "2": ("Skip (NOT recommended)", "end_skip_boundaries"),
+        }
+    },
+
+    "ethical_support": {
+        "question": "6A: Ethical Support Mode.\nOffer, don't impose. Follow consent. Stay flexible.",
+        "options": {
+            "1": ("Finish", "end_ethical")
+        }
+    },
+
+    # ----------------------------------
+    # End Nodes
+    # ----------------------------------
+    "end_not_ready_1": {"end": "Not ready: boundaries frustrate you."},
+    "end_not_ready_2": {"end": "Not ready: allyship requires invitation-based support."},
+    "end_not_ready_3": {"end": "Not ready: intrusive tendencies detected."},
+    "end_safety": {"end": "STOP. She does not feel safe. Allyship means respecting that fully."},
+    "end_cannot_ask": {"end": "If you cannot ask safely, you cannot offer support."},
+    "end_boundaries_no": {"end": "She said NO. You must fully respect this boundary."},
+    "end_no_option": {"end": "She does NOT want the option of support. Respect this completely."},
+    "end_longterm": {"end": "Outcome: Long-term allyship. Wait for her to reopen the topic."},
+    "end_no_capacity": {"end": "Without capacity, offering support would be dishonest."},
+    "end_invasive": {"end": "You cannot support without taking over. You must work on this first."},
+    "end_dishonest": {"end": "Transparency is required. You cannot proceed."},
+    "end_no": {"end": "She said NO. Respectfully step back."},
+    "end_skip_boundaries": {"end": "Skipping boundary-setting risks harm. Revisit this responsibly."},
+    "end_ethical": {"end": "You can ethically show up as a friend when she wants. 🎉"}
+}
+
+
+# ------------------------------
+# Routes
+# ------------------------------
+
+@app.route("/")
+def index():
+    return redirect(url_for("node", node="root"))
+
+
+@app.route("/node/<node>", methods=["GET"])
+def node(node):
+    data = TREE.get(node)
+
+    if not data:
+        return "Invalid node", 404
+
+    # END NODE
+    if "end" in data:
+        return render_template(
+            "node.html",
+            question=data["end"],
+            options={},
+            end=True
+        )
+
+    # DECISION NODE
+    return render_template(
+        "node.html",
+        question=data["question"],
+        options=data["options"],
+        end=False
     )
-    if choice == "1":
-        return ethical_support()
-    else:
-        return end("Skipping boundaries risks harm. Clarify next time.")
 
 
-def ethical_support():
-    slow("\n6A: Ethical Support Mode Activated.")
-    slow("• Offer, don't impose\n• Follow consent\n• Accept shifting boundaries\n• Avoid emotional dependency")
-    return end("Outcome: You can ethically show up as a friend when she wants.")
+# ------------------------------
+# Main
+# ------------------------------
 
-
-def end(message):
-    slow("\n--- FINAL RESULT ---")
-    slow(message)
-    slow("-------------------\n")
-    sys.exit(0)
-
-
-# ---- Run the Program ----
 if __name__ == "__main__":
-    slow("Welcome to the Ultra-Complex Allyship Decision Tree.\n")
-    root_intention()
+    app.run(debug=True)
