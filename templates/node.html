@@ -1,15 +1,19 @@
 {% extends "base.html" %}
-
 {% block content %}
 <div class="container">
-    <p><strong>Stats:</strong> Integrity: {{ stats.integrity }}, Reflection: {{ stats.reflection }}, Ego Risk: {{ stats.ego_risk }}</p>
+    <div class="stats">
+        <strong>Stats:</strong> Integrity: {{ stats.integrity }}, Reflection: {{ stats.reflection }}, Ego Risk: {{ stats.ego_risk }}
+        {% if stats.ego_risk > 80 %}<div class="warning">Warning: Ego Risk dangerously high!</div>{% endif %}
+        {% if stats.reflection < 20 %}<div class="warning">Caution: Reflection too low!</div>{% endif %}
+    </div>
+
     <h2>{{ question|replace('\n','<br>')|safe }}</h2>
 
     {% if not end %}
     <form method="POST">
-        {% for key, (text, next_node) in options.items() %}
-            <input type="hidden" name="option_text" value="{{ text }}">
-            <button class="choice-btn" type="submit" name="option" value="{{ next_node }}">{{ text }}</button>
+        {% for key, option in options.items() %}
+            <input type="hidden" name="option_text" value="{{ option.text }}">
+            <button class="choice-btn" type="submit" name="option" value="{{ key }}">{{ option.text }}</button>
         {% endfor %}
     </form>
     {% else %}
