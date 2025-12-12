@@ -44,9 +44,7 @@ TREE = {
     },
 
     "loop_self_reflection_1": {
-        "question": (
-            "Take a moment to consider your motives carefully. Are you ready to proceed?"
-        ),
+        "question": "Take a moment to consider your motives carefully. Are you ready to proceed?",
         "options": {
             "1": ("Yes, I am ready", "self_reflection_1"),
             "2": ("No, pause longer", "end_self_reflection_needed"),
@@ -54,9 +52,7 @@ TREE = {
     },
 
     "loop_self_reflection_2": {
-        "question": (
-            "Notice the tension in your capacity. Can you pause and revisit your intentions later?"
-        ),
+        "question": "Notice the tension in your capacity. Can you pause and revisit your intentions later?",
         "options": {
             "1": ("Yes, I can pause", "self_reflection_1"),
             "2": ("No, continue anyway", "consent_awareness"),
@@ -74,9 +70,7 @@ TREE = {
     },
 
     "ask_for_consent": {
-        "question": (
-            "You may ask neutrally: 'Would it be okay if I could be someone who shows up as a friend whenever you want?'"
-        ),
+        "question": "You may ask neutrally: 'Would it be okay if I could be someone who shows up as a friend whenever you want?'",
         "options": {
             "1": ("They say yes", "capacity_check_1"),
             "2": ("They say maybe", "conditional_consent"),
@@ -111,9 +105,7 @@ TREE = {
     },
 
     "loop_capacity_reflection": {
-        "question": (
-            "Pause and reflect on your limits. Are you ready to reassess your capacity now?"
-        ),
+        "question": "Pause and reflect on your limits. Are you ready to reassess your capacity now?",
         "options": {
             "1": ("Yes, reassess", "capacity_check_2"),
             "2": ("No, I need more time", "end_self_reflection_needed"),
